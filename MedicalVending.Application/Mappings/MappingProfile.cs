@@ -92,7 +92,8 @@ namespace MedicalVending.Application.Mappings
                 .ForMember(dest => dest.MedicineName, opt => opt.MapFrom(src => src.Medicine != null ? 
                     src.Medicine.MedicineName ?? "Unknown Medicine" : "Unknown Medicine"))
                 .ForMember(dest => dest.PricePerUnit, opt => opt.MapFrom(src => src.PricePerUnit))
-                .ForMember(dest => dest.TotalPriceUnit, opt => opt.MapFrom(src => src.TotalPriceUnit));
+                .ForMember(dest => dest.TotalPriceUnit, opt => opt.MapFrom(src => src.TotalPriceUnit))
+                .ForMember(dest => dest.ImagePath, opt => opt.MapFrom(src => src.Medicine != null ? src.Medicine.ImagePath : null));
 
             CreateMap<CreatePurchaseDto, Purchase>()
             .ForMember(dest => dest.PurchaseDate, opt => opt.MapFrom(_ => DateTime.UtcNow))

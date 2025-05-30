@@ -26,15 +26,20 @@ namespace MedicalVending.API.Controllers
         {
             var cartItems = await _context.Carts
                 .Include(c => c.Medicine)
-                .Where(c => c.CustomerId == customerId)
-                .Select(c => new CartDto
+                .Join(_context.MachineMedicines,
+                      cart => new { cart.MachineId, cart.MedicineId },
+                      mm => new { mm.MachineId, mm.MedicineId },
+                      (cart, mm) => new { cart, mm })
+                .Where(x => x.cart.CustomerId == customerId)
+                .Select(x => new CartDto
                 {
-                    Id = c.Id,
-                    MedicineId = c.MedicineId,
-                    Quantity = c.Quantity,
-                    MedicineName = c.Medicine.MedicineName,
-                    Price = c.Medicine.MedicinePrice,
-                    ImagePath = c.Medicine.ImagePath
+                    Id = x.cart.Id,
+                    MedicineId = x.cart.MedicineId,
+                    Quantity = x.cart.Quantity,
+                    MedicineName = x.cart.Medicine.MedicineName,
+                    Price = x.cart.Medicine.MedicinePrice,
+                    ImagePath = x.cart.Medicine.ImagePath,
+                    Slot = x.mm.Slot
                 })
                 .ToListAsync();
 

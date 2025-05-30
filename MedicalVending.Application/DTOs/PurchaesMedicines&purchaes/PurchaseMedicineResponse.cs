@@ -14,5 +14,6 @@ namespace MedicalVending.Application.DTOs.PurchaesMedicines_purchaes
         public int Quantity { get; set; }
         public decimal PricePerUnit { get; set; }
         public decimal TotalPriceUnit { get; set; }
+        public string? ImagePath { get; set; }
     }
 }

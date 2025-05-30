@@ -8,5 +8,6 @@ namespace MedicalVending.Application.DTOs.Cart
         public string? MedicineName { get; set; }
         public decimal Price { get; set; }
         public string? ImagePath { get; set; }
+        public string? Slot { get; set; }
     }
 } 
