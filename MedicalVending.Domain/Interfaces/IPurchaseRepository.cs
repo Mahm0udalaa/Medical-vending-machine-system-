@@ -10,6 +10,7 @@ namespace MedicalVending.Domain.Interfaces
         
         Task<Purchase?> GetByIdAsync(int id);
         Task<IEnumerable<Purchase>> GetByCustomerAsync(int customerId); // New method
+        Task<IEnumerable<Purchase>> GetByMachineAsync(int machineId); // New method for machine purchases
         Task AddAsync(Purchase purchase);
         // Remove Update/Delete since purchases are immutable
 

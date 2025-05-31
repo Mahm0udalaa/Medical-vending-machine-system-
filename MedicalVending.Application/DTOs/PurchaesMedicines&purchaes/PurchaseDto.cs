@@ -12,6 +12,7 @@ namespace MedicalVending.Application.DTOs.PurchaesMedicines_purchaes
         public DateTime PurchaseDate { get; set; }
         public decimal TotalPrice { get; set; }
         public int MachineId { get; set; }
+        public int CustomerId { get; set; }
         public required List<PurchaseMedicineResponse> Items { get; set; }
     }
 }

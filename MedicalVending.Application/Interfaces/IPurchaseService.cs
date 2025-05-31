@@ -18,5 +18,7 @@ namespace MedicalVending.Application.Interfaces
         // Admin-specific purchase data
         Task<IEnumerable<AdminPurchaseDto>> GetAdminPurchaseReportAsync(DateTime? fromDate = null, DateTime? toDate = null);
         Task<PurchaseDto> CheckoutCartAsync(int customerId);
+        // New method for getting machine purchases
+        Task<IEnumerable<PurchaseDto>> GetMachinePurchasesAsync(int machineId);
     }
 }

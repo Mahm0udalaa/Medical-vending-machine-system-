@@ -1,4 +1,5 @@
 ﻿using MedicalVending.Application.DTOs.Admins;
+using MedicalVending.Application.DTOs.PurchaesMedicines_purchaes;
 using MedicalVending.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +14,12 @@ namespace MedicalVending.API.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;
+        private readonly IPurchaseService _purchaseService;
 
-        public AdminController(IAdminService adminService)
+        public AdminController(IAdminService adminService, IPurchaseService purchaseService)
         {
             _adminService = adminService;
+            _purchaseService = purchaseService;
         }
 
         /// <summary>
@@ -85,6 +88,16 @@ namespace MedicalVending.API.Controllers
             // The service will handle 'not found' case internally
             await _adminService.DeleteAsync(id);
             return NoContent(); // 204 No Content
+        }
+
+        /// <summary>
+        /// Get all purchases for a specific vending machine.
+        /// </summary>
+        [HttpGet("machines/{machineId}/purchases")]
+        public async Task<ActionResult<IEnumerable<PurchaseDto>>> GetMachinePurchases(int machineId)
+        {
+            var purchases = await _purchaseService.GetMachinePurchasesAsync(machineId);
+            return Ok(purchases);
         }
     }
 }

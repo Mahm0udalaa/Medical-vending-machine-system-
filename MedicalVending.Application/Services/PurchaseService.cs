@@ -94,7 +94,8 @@ namespace MedicalVending.Application.Services
                 PurchaseId = purchase.PurchaseId,
                 PurchaseDate = purchase.PurchaseDate,
                 TotalPrice = purchase.TotalPrice,
-                MachineId = purchase.MachineId, 
+                MachineId = purchase.MachineId,
+                CustomerId = purchase.CustomerId,
                 Items = (await _purchaseMedicineService.GetItemsByPurchaseAsync(id)).ToList()
             };
         }
@@ -241,6 +242,17 @@ namespace MedicalVending.Application.Services
             await _cartRepository.RemoveCartItemsAsync(cartItems);
 
             return await GetPurchaseDetailsAsync(purchase.PurchaseId);
+        }
+
+        public async Task<IEnumerable<PurchaseDto>> GetMachinePurchasesAsync(int machineId)
+        {
+            var purchases = await _purchaseRepository.GetByMachineAsync(machineId);
+            var result = new List<PurchaseDto>();
+            foreach (var p in purchases)
+            {
+                result.Add(await GetPurchaseDetailsAsync(p.PurchaseId));
+            }
+            return result;
         }
     }
 }

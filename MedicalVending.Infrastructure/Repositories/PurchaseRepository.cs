@@ -80,6 +80,16 @@ namespace MedicalVending.Infrastructure.Repositories
           .AsNoTracking() // Recommended for read-only
           .ToListAsync();
 
+        public async Task<IEnumerable<Purchase>> GetByMachineAsync(int machineId)
+        => await _context.Purchases
+            .Where(p => p.MachineId == machineId)
+            .Include(p => p.Customer)
+            .Include(p => p.PurchaseMedicines)
+                .ThenInclude(pm => pm.Medicine)
+            .OrderByDescending(p => p.PurchaseDate)
+            .AsNoTracking()
+            .ToListAsync();
+
         public async Task<IEnumerable<Purchase>> GetAllWithDetailsAsync(DateTime? fromDate = null, DateTime? toDate = null)
         {
             var query = _context.Purchases.AsQueryable();
