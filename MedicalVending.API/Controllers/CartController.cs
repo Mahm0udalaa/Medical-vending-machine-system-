@@ -26,6 +26,7 @@ namespace MedicalVending.API.Controllers
         {
             var cartItems = await _context.Carts
                 .Include(c => c.Medicine)
+                .Include(c => c.Machine)
                 .Join(_context.MachineMedicines,
                       cart => new { cart.MachineId, cart.MedicineId },
                       mm => new { mm.MachineId, mm.MedicineId },
@@ -34,6 +35,8 @@ namespace MedicalVending.API.Controllers
                 .Select(x => new CartDto
                 {
                     Id = x.cart.Id,
+                    MachineId = x.cart.MachineId,
+                    MachineLocation = x.cart.Machine.Location,
                     MedicineId = x.cart.MedicineId,
                     Quantity = x.cart.Quantity,
                     MedicineName = x.cart.Medicine.MedicineName,

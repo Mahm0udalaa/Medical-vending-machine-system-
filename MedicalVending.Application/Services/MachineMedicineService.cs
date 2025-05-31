@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace MedicalVending.Application.Services
 {
@@ -75,6 +77,12 @@ namespace MedicalVending.Application.Services
 
         public async Task<MachineStockDto> AddMedicineToMachineAsync(AddMedicineToMachineDto dto)
         {
+            // Validate input
+            if (dto.Quantity <= 0)
+            {
+                throw new InvalidOperationException("Quantity must be greater than 0");
+            }
+
             // Check if machine exists
             var machine = await _machineRepository.GetByIdAsync(dto.MachineId)
                 ?? throw new NotFoundException($"Vending machine with ID {dto.MachineId} not found");
@@ -83,14 +91,104 @@ namespace MedicalVending.Application.Services
             var medicine = await _medicineRepository.GetByIdAsync(dto.MedicineId)
                 ?? throw new NotFoundException($"Medicine with ID {dto.MedicineId} not found");
 
-            // Check if this medicine is already in the machine
-            var exists = await _repository.ExistsAsync(dto.MachineId, dto.MedicineId);
-            if (exists)
+            // Validate initial quantity
+            if (dto.Quantity > 6)
             {
-                throw new InvalidOperationException($"Medicine {dto.MedicineId} is already in machine {dto.MachineId}");
+                throw new InvalidOperationException(JsonSerializer.Serialize(new
+                {
+                    message = "Initial quantity cannot exceed the maximum slot capacity of 6 units",
+                    attemptedQuantity = dto.Quantity,
+                    maxAllowed = 6
+                }));
             }
 
-            // Create new machine medicine entry - don't include full entity objects
+            // Get all medicines in the machine
+            var machineMedicines = await _repository.GetByMachineIdAsync(dto.MachineId);
+            
+            // Check if this medicine already exists in the machine (regardless of slot)
+            var existingMedicine = machineMedicines.FirstOrDefault(mm => mm.MedicineId == dto.MedicineId);
+            if (existingMedicine != null)
+            {
+                throw new InvalidOperationException(JsonSerializer.Serialize(new
+                {
+                    message = $"Medicine {medicine.MedicineName} is already in the machine in slot {existingMedicine.Slot}",
+                    existingSlot = existingMedicine.Slot,
+                    currentQuantity = existingMedicine.Quantity
+                }));
+            }
+
+            // Check if slot exists in the machine
+            var existingSlot = machineMedicines.FirstOrDefault(mm => mm.Slot == dto.Slot);
+
+            if (existingSlot != null)
+            {
+                // If slot exists but has different medicine
+                if (existingSlot.MedicineId != dto.MedicineId)
+                {
+                    // Get all available slots (empty or same medicine)
+                    var availableSlots = machineMedicines
+                        .Where(mm => mm.Quantity == 0 || mm.MedicineId == dto.MedicineId)
+                        .Select(mm => mm.Slot)
+                        .ToList();
+
+                    // If no slots are available, get all slots in the machine
+                    if (!availableSlots.Any())
+                    {
+                        availableSlots = machineMedicines
+                            .Select(mm => mm.Slot)
+                            .ToList();
+                    }
+
+                    throw new InvalidOperationException(JsonSerializer.Serialize(new
+                    {
+                        message = $"Slot {dto.Slot} already contains a different medicine",
+                        availableSlots = availableSlots,
+                        currentSlotContents = new
+                        {
+                            slot = existingSlot.Slot,
+                            medicineId = existingSlot.MedicineId,
+                            quantity = existingSlot.Quantity
+                        }
+                    }));
+                }
+
+                // If slot exists with same medicine, check quantity limit
+                if (existingSlot.Quantity + dto.Quantity > 6)
+                {
+                    throw new InvalidOperationException(JsonSerializer.Serialize(new
+                    {
+                        message = "Adding this quantity would exceed the maximum slot capacity of 6 units",
+                        currentQuantity = existingSlot.Quantity,
+                        attemptedQuantity = dto.Quantity,
+                        availableSpace = 6 - existingSlot.Quantity
+                    }));
+                }
+
+                // Update existing slot
+                existingSlot.Quantity += dto.Quantity;
+                existingSlot.LastRestocked = DateTime.UtcNow;
+                await _repository.UpdateAsync(existingSlot);
+
+                // Update medicine stock
+                medicine.Stock -= dto.Quantity;
+                await _medicineRepository.UpdateAsync(medicine);
+
+                return new MachineStockDto
+                {
+                    MachineId = machine.MachineId,
+                    MachineLocation = machine.Location,
+                    MedicineId = medicine.MedicineId,
+                    MedicineName = medicine.MedicineName,
+                    MedicinePrice = medicine.MedicinePrice,
+                    Quantity = existingSlot.Quantity,
+                    CategoryId = medicine.CategoryId,
+                    Description = medicine.Description,
+                    ImagePath = medicine.ImagePath,
+                    Slot = dto.Slot
+                };
+            }
+
+            // Create new machine medicine entry only if slot doesn't exist
             var machineMedicine = new MachineMedicine
             {
                 MachineId = dto.MachineId,
@@ -101,6 +199,10 @@ namespace MedicalVending.Application.Services
             };
 
             await _repository.AddAsync(machineMedicine);
+
+            // Update medicine stock
+            medicine.Stock -= dto.Quantity;
+            await _medicineRepository.UpdateAsync(medicine);
 
             return new MachineStockDto
             {

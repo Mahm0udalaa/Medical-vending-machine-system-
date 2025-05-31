@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Net;
+using System.Text.Json;
+using MedicalVending.Domain.Exceptions;
 
 namespace MedicalVending.API.Controllers
 {
@@ -69,8 +71,29 @@ namespace MedicalVending.API.Controllers
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<ActionResult<MachineStockDto>> AddMedicineToMachine([FromBody] AddMedicineToMachineDto dto)
         {
-            var result = await _machineMedicineService.AddMedicineToMachineAsync(dto);
-            return CreatedAtAction(nameof(GetStock), new { machineId = result.MachineId, medicineId = result.MedicineId }, result);
+            try
+            {
+                var result = await _machineMedicineService.AddMedicineToMachineAsync(dto);
+                return CreatedAtAction(nameof(GetStock), new { machineId = result.MachineId, medicineId = result.MedicineId }, result);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { error = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                try
+                {
+                    // Try to parse the exception message as JSON
+                    var errorDetails = JsonSerializer.Deserialize<object>(ex.Message);
+                    return BadRequest(errorDetails);
+                }
+                catch
+                {
+                    // If parsing fails, return the message as a simple error
+                    return BadRequest(new { error = ex.Message });
+                }
+            }
         }
 
         /// <summary>
