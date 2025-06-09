@@ -1,0 +1,54 @@
+name: graduation_project
+description: "A new Flutter project."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  bloc: ^9.0.0
+  cupertino_icons: ^1.0.8
+  flutter_secure_storage: ^9.2.4
+  dio: ^5.8.0+1
+  equatable: ^2.0.7
+  geolocator: ^14.0.0
+  get_it: ^8.0.3
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+  image_picker: ^1.1.0
+  pretty_dio_logger: ^1.4.0
+  carousel_slider: ^5.0.0
+  flutter_spinbox: ^0.13.1
+  flutter_offline: ^5.0.0
+  font_awesome_flutter: ^10.8.0
+  mask_text_input_formatter: ^2.9.0
+  pinput: ^5.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/native_splash_logo.png"  
+
+   
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/native_splash_logo.png
+    - assets/
+
+# flutter_native_splash:
+#   color: "#ffffff"
+#   image: assets/splash_image.png
+#   fullscreen: true
+#   android: true
+#   ios: true
